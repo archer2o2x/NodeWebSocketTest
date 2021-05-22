@@ -1,15 +1,23 @@
 const express = require("express");
+const ws = require("ws");
 
 var app = express();
 
-app.get("/",function(request, response) {
+const wsServer = new ws.Server({ noServer: true });
+wsServer.on("connection", socket => {
+    socket.on("message", message => console.log(message));
+});
+
+app.get("/", function(request, response) {
 
     response.send("Hello World!");
 
 });
 
-app.listen(80, function () {
+const expressServer = app.listen(80);
 
-    console.log("Started application on port 80");
-
+expressServer.on("upgrade", (request, socket, head) => {
+    wsServer.handleUpgrade(request, socket, head, socket => {
+        wsServer.emit("connection", socket, request);
+    });
 });
